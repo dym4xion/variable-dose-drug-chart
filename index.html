@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="">
+  <head>
+    <meta charset="utf-8">
+    <title>Steroid Reducing Chart</title>
+  </head>
+  <body>
+    <h1>Steroid Reducing Chart</h1>
+
+
+    <form id="form" action="/action_page.php">
+  		Duration: <input type="number" name="duration"><br>
+  		Start date: <input type="date" name="startDate"><br>
+  		Starting dose: <input type="number" name="startDose">mg<br>
+  		Dose unit strength: <input type="number" name="duStrength">mg<br>
+  		<input type="button" onclick="returnEndDate()" value="Calc end date">
+	</form>
+
+	<p id="chart"> My chart should appear here</p>
+
+    <script type="text/javascript">
+   		  	
+    	function returnEndDate(){
+
+    		const startDate = new Date(document.getElementById("form").elements[1].value);
+    		
+    		var duration = document.getElementById("form").elements[0].value;
+    		duration = Number(duration);
+
+    		var sDose = Number(document.getElementById("form").elements[2].value);
+    		var duStr = Number(document.getElementById("form").elements[3].value);
+    		var tabs = sDose/duStr;
+
+    		
+    		var endDate = new Date();
+    		endDate.setMonth(startDate.getMonth());
+    		endDate.setFullYear(startDate.getFullYear());
+    		endDate.setDate(startDate.getDate() + duration - 1);
+    		
+    		//document.getElementById("chart").innerHTML = "Start date: " + startDate.toDateString() + "<br>" + 
+    		//	"For: " + duration + " days take " + tabs + " tablets." + "<br>" + "End date: " + endDate.toDateString() + "<br>";
+    		
+    		document.getElementById("chart").innerHTML = "From " + startDate.toDateString() + " to " + endDate.toDateString() + " take " + tabs + " tablets every morning.";
+    	}
+    </script>
+
+    <button onclick="window.print()">Print chart.</button>
+
+  </body>
+</html>
