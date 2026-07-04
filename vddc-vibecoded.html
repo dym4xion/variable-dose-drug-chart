@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Variable Drug Dosing Chart</title>
+
+<style>
+body{
+    font-family:Arial,Helvetica,sans-serif;
+    max-width:900px;
+    margin:auto;
+    padding:20px;
+    line-height:1.4;
+}
+
+table{
+    border-collapse:collapse;
+    width:100%;
+    margin-bottom:20px;
+}
+
+th,td{
+    border:1px solid #bbb;
+    padding:8px;
+    text-align:left;
+    vertical-align:top;
+}
+
+input[type=number]{
+    width:90px;
+}
+
+button{
+    margin:4px;
+    padding:8px 14px;
+    cursor:pointer;
+}
+
+#printArea{
+    margin-top:20px;
+}
+
+/* PRINT */
+@media print{
+
+    @page{
+        margin:5%;
+    }
+
+    body *{
+        visibility:hidden;
+    }
+
+    #printArea,
+    #printArea *{
+        visibility:visible;
+    }
+
+    #printArea{
+        position:absolute;
+        left:0;
+        top:0;
+        width:90%;
+        padding:5%;
+        box-sizing:border-box;
+    }
+
+    button{
+        display:none;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<h1>Variable Drug Dosing Chart</h1>
+
+<p>
+Drug:
+<input type="text" id="drug">
+</p>
+
+<h2>Tablet strengths</h2>
+
+<table id="strengthTable">
+<tr><th>Strength (mg)</th></tr>
+<tr><td><input type="number" class="strength"></td></tr>
+</table>
+
+<button onclick="addStrength()">Add Strength</button>
+<button onclick="removeStrength()">Remove Last Strength</button>
+
+<h2>Dose schedule</h2>
+
+<p>
+Start date:
+<input type="date" id="startDate">
+</p>
+
+<table id="stretchTable">
+<tr>
+<th>Dose (mg)</th>
+<th>Duration (days)</th>
+</tr>
+
+<tr>
+<td><input type="number" class="dose"></td>
+<td><input type="number" class="duration"></td>
+</tr>
+</table>
+
+<button onclick="addStretch()">Add Stretch</button>
+<button onclick="removeStretch()">Remove Last Stretch</button>
+
+<br><br>
+
+<button onclick="calculateCourse()">Calculate</button>
+<button onclick="window.print()">Print</button>
+
+<hr>
+
+<div id="printArea">
+<div id="chart">Output will appear here.</div>
+</div>
+
+<script>
+
+function addStrength(){
+    const row=document.getElementById("strengthTable").insertRow();
+    row.insertCell(0).innerHTML='<input type="number" class="strength">';
+}
+
+function removeStrength(){
+    const t=document.getElementById("strengthTable");
+    if(t.rows.length>2) t.deleteRow(t.rows.length-1);
+}
+
+function addStretch(){
+    const row=document.getElementById("stretchTable").insertRow();
+    row.insertCell(0).innerHTML='<input type="number" class="dose">';
+    row.insertCell(1).innerHTML='<input type="number" class="duration">';
+}
+
+function removeStretch(){
+    const t=document.getElementById("stretchTable");
+    if(t.rows.length>2) t.deleteRow(t.rows.length-1);
+}
+
+function formatDate(d){
+
+    const w=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+    const m=["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+    return w[d.getDay()]+" "+d.getDate()+"-"+m[d.getMonth()]+"-"+d.getFullYear();
+}
+
+function tabletBreakdown(dose,strengths){
+
+    strengths=[...strengths].sort((a,b)=>b-a);
+
+    let remaining=dose;
+    let parts=[];
+
+    for(const s of strengths){
+
+        const n=Math.floor(remaining/s);
+
+        if(n>0){
+            parts.push(n+" × <b>"+s+" mg</b> tablets");
+            remaining-=n*s;
+        }
+    }
+
+    if(remaining>0){
+        parts.push("(cannot exactly make "+dose+" mg)");
+    }
+
+    return parts.join(" + ");
+}
+
+function calculateCourse(){
+
+    const drug=document.getElementById("drug").value.trim();
+    const start=document.getElementById("startDate").value;
+
+    if(!start){
+        alert("Select start date");
+        return;
+    }
+
+    const strengths=[...document.querySelectorAll(".strength")]
+        .map(x=>Number(x.value))
+        .filter(x=>x>0);
+
+    const doses=[...document.querySelectorAll(".dose")]
+        .map(x=>Number(x.value));
+
+    const durations=[...document.querySelectorAll(".duration")]
+        .map(x=>Number(x.value));
+
+    const strengthList=strengths
+        .slice()
+        .sort((a,b)=>b-a)
+        .map(s=>s+" mg")
+        .join(", ");
+
+    let html="";
+
+    if(drug){
+        html+="<h2>"+drug+"</h2>";
+        html+="<p><strong>Tablet strengths:</strong> "+strengthList+"</p>";
+    }
+
+    let current=new Date(start);
+    let totals={};
+
+    for(let i=0;i<doses.length;i++){
+
+        if(!doses[i] || !durations[i]) continue;
+
+        let startD=new Date(current);
+        let endD=new Date(current);
+        endD.setDate(endD.getDate()+durations[i]-1);
+
+        let breakdown=tabletBreakdown(doses[i],strengths);
+
+        html+="<h3>"+formatDate(startD)+" to "+formatDate(endD)+"</h3>";
+
+        html+="<table>";
+        html+="<tr><th>Day</th><th>Dose instruction</th></tr>";
+
+        let remaining=doses[i];
+        let sorted=[...strengths].sort((a,b)=>b-a);
+
+        for(const s of sorted){
+            const n=Math.floor(remaining/s);
+            if(n>0){
+                totals[s]=(totals[s]||0)+(n*durations[i]);
+                remaining-=n*s;
+            }
+        }
+
+        for(let d=0; d<durations[i]; d++){
+
+            let day=new Date(startD);
+            day.setDate(startD.getDate()+d);
+
+            html+="<tr>";
+            html+="<td>"+formatDate(day)+"</td>";
+            html+="<td>"+breakdown+"</td>";
+            html+="</tr>";
+        }
+
+        html+="</table>";
+
+        current.setDate(current.getDate()+durations[i]);
+    }
+
+    html+="<hr><h3>Total tablets required</h3><ul>";
+
+    Object.keys(totals).sort((a,b)=>b-a).forEach(s=>{
+        html+="<li>"+s+" mg tablets: <b>"+totals[s]+"</b></li>";
+    });
+
+    html+="</ul>";
+
+    document.getElementById("chart").innerHTML=html;
+}
+
+</script>
+
+</body>
+</html>

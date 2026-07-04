@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="">
+  <head>
+    <meta charset="utf-8">
+    <title>Variable Drug Dosing Chart</title>
+  </head>
+  <body>
+    <h1>Variable Drug Dosing Chart</h1>
+    <form id="preparation">
+    	Drug: <input type="text" name="droog">
+    </form>
+
+    <form id="stretch" action="/action_page.php">
+    	Start date: <input type="date" name="startDate"><br>
+    	Starting dose: <input type="number" name="startDose">mg<br>
+  		Duration: <input type="number" name="duration"><br>
+  		Dose unit strength: <input type="number" name="duStrength">mg<br>
+	</form>
+
+	<input type="button" onclick="addStretchInstructions()" value="Calculate Course">
+
+	<p id="chart"> My chart should appear here</p>
+
+    <script type="text/javascript">
+   		  	
+    	function addStretchInstructions(){
+
+    		const startDate = new Date(document.getElementById("stretch").elements[0].value);
+    		var duration = document.getElementById("stretch").elements[2].value;
+    		duration = Number(duration);
+    		var startingDose = Number(document.getElementById("stretch").elements[1].value);
+    		var duStr = Number(document.getElementById("stretch").elements[3].value);
+    		var tabs = startingDose/duStr;
+
+    		var endDate = new Date();
+    		endDate.setMonth(startDate.getMonth());
+    		endDate.setFullYear(startDate.getFullYear());
+    		endDate.setDate(startDate.getDate() + duration - 1);
+    		
+    		
+    		document.getElementById("chart").innerHTML = 
+    			"From " + startDate.toDateString() + " to " + 
+    			endDate.toDateString() + " take " + tabs + 
+    			" tablets every morning.";
+    	}
+    </script>
+
+    <button onclick="window.print()">Print chart.</button>
+    <style type="text/css">
+    	
+    </style>
+  </body>
+</html>
